@@ -1,0 +1,74 @@
+======================================================================
+ CoreInspect Security Audit Report
+ Target: https://nexusnature.cloud/index
+ Profile: passive
+ Date: 2026-02-24 22:44:34
+======================================================================
+
+Security Score: 87/100  Grade: B
+Deductions: 13
+Breakdown:
+  - Headers: 11
+  - InfoLeak: 0
+  - TLS: 2
+
+Top issues:
+  1. [Medium] Missing security header: strict-transport-security (https://nexusnature.cloud/index)
+  2. [Low] HSTS not enabled on HTTPS endpoint (https://nexusnature.cloud/index)
+  3. [Low] Missing security header: x-content-type-options (https://nexusnature.cloud/index)
+  4. [Low] Missing security header: referrer-policy (https://nexusnature.cloud/index)
+  5. [Low] Missing security header: permissions-policy (https://nexusnature.cloud/index)
+  6. [Info] Server header disclosed (https://nexusnature.cloud/index)
+  7. [Info] X-Powered-By header disclosed (https://nexusnature.cloud/index)
+
+----------------------------------------------------------------------
+
+[1] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud/index
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
+[2] Missing security header: strict-transport-security
+    Severity: Medium
+    Category: Headers
+    URL: https://nexusnature.cloud/index
+    Evidence: Header not present in response.
+    Recommendation: Enable HSTS to enforce HTTPS.
+----------------------------------------------------------------------
+[3] Missing security header: x-content-type-options
+    Severity: Low
+    Category: Headers
+    URL: https://nexusnature.cloud/index
+    Evidence: Header not present in response.
+    Recommendation: Set X-Content-Type-Options: nosniff.
+----------------------------------------------------------------------
+[4] Missing security header: referrer-policy
+    Severity: Low
+    Category: Headers
+    URL: https://nexusnature.cloud/index
+    Evidence: Header not present in response.
+    Recommendation: Set Referrer-Policy to reduce referrer leakage.
+----------------------------------------------------------------------
+[5] Missing security header: permissions-policy
+    Severity: Low
+    Category: Headers
+    URL: https://nexusnature.cloud/index
+    Evidence: Header not present in response.
+    Recommendation: Set Permissions-Policy to restrict powerful browser features.
+----------------------------------------------------------------------
+[6] Server header disclosed
+    Severity: Info
+    Category: InfoLeak
+    URL: https://nexusnature.cloud/index
+    Evidence: Server: Apache/2.4.65 (Debian)
+    Recommendation: Consider minimizing server banner information if not needed.
+----------------------------------------------------------------------
+[7] X-Powered-By header disclosed
+    Severity: Info
+    Category: InfoLeak
+    URL: https://nexusnature.cloud/index
+    Evidence: X-Powered-By: PHP/8.2.30
+    Recommendation: Disable X-Powered-By to reduce technology fingerprinting.
+----------------------------------------------------------------------

@@ -17,11 +17,29 @@ class Crawler:
         self.headless = headless
         self.url_pattern = re.compile(r'href=[\'"]?([^\'" >]+)')
 
+        # Skip static assets to keep crawling focused and fast
+        self.skip_ext = {
+            ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp",
+            ".woff", ".woff2", ".ttf", ".eot",
+            ".pdf", ".zip", ".rar", ".7z",
+            ".mp3", ".mp4", ".avi", ".mov",
+        }
+
     def _in_scope(self, full_url: str) -> bool:
         try:
             return urlparse(full_url).netloc.endswith(self.domain)
         except Exception:
             return False
+
+    def _is_probably_page(self, full_url: str) -> bool:
+        try:
+            path = urlparse(full_url).path.lower()
+            for ext in self.skip_ext:
+                if path.endswith(ext):
+                    return False
+            return True
+        except Exception:
+            return True
 
     def extract_links(self, url, html_content):
         links = set()
@@ -29,7 +47,7 @@ class Crawler:
 
         for anchor in soup.find_all("a", href=True):
             full_url = urljoin(url, anchor["href"])
-            if self._in_scope(full_url):
+            if self._in_scope(full_url) and self._is_probably_page(full_url):
                 clean = full_url.split("#")[0]
                 if clean not in self.visited_urls and clean.startswith(("http://", "https://")):
                     links.add(clean)
@@ -37,7 +55,7 @@ class Crawler:
         matches = self.url_pattern.findall(html_content or "")
         for match in matches:
             full_url = urljoin(url, match)
-            if self._in_scope(full_url) and full_url.startswith(("http://", "https://")):
+            if self._in_scope(full_url) and self._is_probably_page(full_url) and full_url.startswith(("http://", "https://")):
                 clean = full_url.split("#")[0]
                 if clean not in self.visited_urls:
                     links.add(clean)
@@ -77,6 +95,8 @@ class Crawler:
             while urls_to_visit and len(self.visited_urls) < max_pages:
                 current_url = urls_to_visit.pop(0)
                 if current_url in self.visited_urls:
+                    continue
+                if not self._is_probably_page(current_url):
                     continue
 
                 print(f"{Colors.INFO} Crawling: {current_url}")
