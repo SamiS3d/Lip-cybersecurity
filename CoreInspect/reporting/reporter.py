@@ -5,6 +5,7 @@ from urllib.parse import urlparse
 
 from utils.colors import Colors
 from reporting.models import Finding, ScoreResult
+from reporting.html_report import render_html_report
 from core.config import ScanConfig
 
 
@@ -14,6 +15,9 @@ class Reporter:
         self.findings: list[Finding] = []
         self.score: ScoreResult | None = None
 
+        # Dedup key set
+        self._seen = set()
+
         os.makedirs(self.config.out_dir, exist_ok=True)
 
         domain = urlparse(config.target).netloc.replace(":", "_")
@@ -21,8 +25,18 @@ class Reporter:
         self.base_name = f"scan_{domain}_{ts}"
         self.txt_path = os.path.join(self.config.out_dir, f"{self.base_name}.txt")
         self.json_path = os.path.join(self.config.out_dir, f"{self.base_name}.json")
+        self.html_path = os.path.join(self.config.out_dir, f"{self.base_name}.html")
+
+    def _key(self, finding: Finding) -> str:
+        host = urlparse(finding.url).netloc
+        return f"{finding.title}|{finding.severity}|{finding.category}|{host}"
 
     def add(self, finding: Finding):
+        k = self._key(finding)
+        if k in self._seen:
+            return
+        self._seen.add(k)
+
         self.findings.append(finding)
         print(f"{Colors.FINDING} {finding.severity} | {finding.category} | {finding.title} | {finding.url}")
 
@@ -30,10 +44,14 @@ class Reporter:
         self.score = score
 
     def save(self):
-        if self.config.output_format in ("txt", "both"):
+        fmt = self.config.output_format
+
+        if fmt in ("txt", "both"):
             self._save_txt()
-        if self.config.output_format in ("json", "both"):
+        if fmt in ("json", "both"):
             self._save_json()
+        if fmt in ("html", "both"):
+            self._save_html()
 
         print(f"{Colors.SUCCESS} Reports saved under: {self.config.out_dir}")
 
@@ -85,3 +103,15 @@ class Reporter:
         with open(self.json_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=2)
         print(f"{Colors.SUCCESS} JSON report: {self.json_path}")
+
+    def _save_html(self):
+        html = render_html_report(
+            target=self.config.target,
+            profile=self.config.profile,
+            score_result=self.score,
+            findings=self.findings,
+            generated_at=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        )
+        with open(self.html_path, "w", encoding="utf-8") as f:
+            f.write(html)
+        print(f"{Colors.SUCCESS} HTML report: {self.html_path}")

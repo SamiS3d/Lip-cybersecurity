@@ -1,4 +1,4 @@
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from checks.base import BaseCheck
 from reporting.models import Finding
@@ -20,20 +20,30 @@ class SensitivePathsCheck(BaseCheck):
         "/db.sql",
     ]
 
+    def __init__(self, requester, reporter):
+        super().__init__(requester, reporter)
+        self._checked_hosts = set()
+
     def run_url(self, url: str):
-        # Only probe on root-ish pages to reduce noise
-        # Probe only once per base host by using the target provided in URL: join with current
+        parsed = urlparse(url)
+        host = parsed.netloc
+        if not host or host in self._checked_hosts:
+            return
+        self._checked_hosts.add(host)
+
+        base = f"{parsed.scheme}://{host}/"
+
         for path in self.COMMON_PATHS:
-            probe = urljoin(url, path)
+            probe = urljoin(base, path)
             r = self.req.get(probe)
             if not r:
                 continue
 
-            # Heuristic: if 200 and non-trivial body, flag
             if r.status_code == 200 and (r.text and len(r.text) > 20):
+                severity = "High" if path in ("/.env", "/.git/HEAD") else "Medium"
                 self.reporter.add(Finding(
                     title=f"Potentially exposed sensitive path: {path}",
-                    severity="High" if path in ("/.env", "/.git/HEAD") else "Medium",
+                    severity=severity,
                     category="Exposure",
                     url=probe,
                     evidence=f"HTTP {r.status_code}, length={len(r.text)}",

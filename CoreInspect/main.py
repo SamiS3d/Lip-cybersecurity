@@ -1,5 +1,6 @@
 import argparse
 import sys
+import re
 from urllib.parse import urlparse
 
 from core.logging_config import setup_logging, get_logger
@@ -17,6 +18,7 @@ from checks.info_leak import InfoLeakCheck
 from checks.sensitive_paths import SensitivePathsCheck
 from checks.forms import FormsCheck
 from checks.reflection import ReflectionCheck
+from checks.mixed_content import MixedContentCheck
 
 
 def parse_args():
@@ -33,7 +35,7 @@ def parse_args():
     p.add_argument("--headless", action="store_true", default=True, help="Run Playwright headless (default true).")
     p.add_argument("--no-headless", action="store_false", dest="headless", help="Run with visible browser.")
     p.add_argument("--out", default="reports", help="Output directory")
-    p.add_argument("--format", choices=["txt", "json", "both"], default="both")
+    p.add_argument("--format", choices=["txt", "json", "html", "both"], default="both")
     p.add_argument("--authorized", action="store_true", help="Confirm you are authorized to test this target.")
     p.add_argument("--log-level", choices=["DEBUG", "INFO", "WARNING", "ERROR"], default="INFO")
     return p.parse_args()
@@ -81,7 +83,16 @@ def main():
 
     # Crawl (dynamic via Playwright)
     crawler = Crawler(target_url=config.target, headless=config.headless, timeout_ms=config.timeout * 1000)
-    visited_urls, forms = crawler.crawl(max_pages=config.max_pages)
+    deep_seeds = []
+    if config.profile == 'deep':
+        # Add robots.txt and sitemap.xml hints (best-effort)
+        for hint in ('/robots.txt', '/sitemap.xml'):
+            hint_url = config.target.rstrip('/') + hint
+            r = req.get(hint_url)
+            if r and r.text:
+                # Collect absolute URLs from the file
+                deep_seeds.extend(re.findall(r'https?://[^\s\"\']+', r.text))
+    visited_urls, forms = crawler.crawl(max_pages=config.max_pages, seeds=deep_seeds)
 
     # Always run passive checks on the main page first (baseline)
     checks = [

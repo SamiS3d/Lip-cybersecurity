@@ -9,7 +9,7 @@ from utils.colors import Colors
 
 class Crawler:
     def __init__(self, target_url: str, headless: bool = True, timeout_ms: int = 12000):
-        self.target_url = target_url
+        self.target_url = target_url.rstrip("/")
         self.visited_urls = set()
         self.forms = []
         self.domain = urlparse(target_url).netloc
@@ -17,9 +17,9 @@ class Crawler:
         self.headless = headless
         self.url_pattern = re.compile(r'href=[\'"]?([^\'" >]+)')
 
-        # Skip static assets to keep crawling focused and fast
         self.skip_ext = {
-            ".css", ".js", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp",
+            ".css", ".js", ".map",
+            ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".webp",
             ".woff", ".woff2", ".ttf", ".eot",
             ".pdf", ".zip", ".rar", ".7z",
             ".mp3", ".mp4", ".avi", ".mov",
@@ -41,6 +41,9 @@ class Crawler:
         except Exception:
             return True
 
+    def _clean_url(self, u: str) -> str:
+        return (u or "").split("#")[0].rstrip("/")
+
     def extract_links(self, url, html_content):
         links = set()
         soup = BeautifulSoup(html_content, "lxml")
@@ -48,16 +51,17 @@ class Crawler:
         for anchor in soup.find_all("a", href=True):
             full_url = urljoin(url, anchor["href"])
             if self._in_scope(full_url) and self._is_probably_page(full_url):
-                clean = full_url.split("#")[0]
-                if clean not in self.visited_urls and clean.startswith(("http://", "https://")):
+                clean = self._clean_url(full_url)
+                if clean and clean not in self.visited_urls and clean.startswith(("http://", "https://")):
                     links.add(clean)
 
+        # Backup regex extraction for tricky pages
         matches = self.url_pattern.findall(html_content or "")
         for match in matches:
             full_url = urljoin(url, match)
             if self._in_scope(full_url) and self._is_probably_page(full_url) and full_url.startswith(("http://", "https://")):
-                clean = full_url.split("#")[0]
-                if clean not in self.visited_urls:
+                clean = self._clean_url(full_url)
+                if clean and clean not in self.visited_urls:
                     links.add(clean)
 
         return links
@@ -84,9 +88,13 @@ class Crawler:
             if form_details not in self.forms:
                 self.forms.append(form_details)
 
-    def crawl(self, max_pages=25):
+    def crawl(self, max_pages=25, seeds=None):
         print(f"{Colors.INFO} Starting Dynamic Crawler (Playwright) on: {self.target_url}")
         urls_to_visit = [self.target_url]
+        if seeds:
+            for u in seeds:
+                if u and isinstance(u, str):
+                    urls_to_visit.append(u)
 
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=self.headless)
@@ -94,7 +102,9 @@ class Crawler:
 
             while urls_to_visit and len(self.visited_urls) < max_pages:
                 current_url = urls_to_visit.pop(0)
-                if current_url in self.visited_urls:
+                current_url = self._clean_url(current_url)
+
+                if not current_url or current_url in self.visited_urls:
                     continue
                 if not self._is_probably_page(current_url):
                     continue
@@ -103,8 +113,12 @@ class Crawler:
                 self.visited_urls.add(current_url)
 
                 try:
-                    page.goto(current_url, wait_until="networkidle", timeout=self.timeout_ms)
+                    page.goto(current_url, wait_until="domcontentloaded", timeout=self.timeout_ms)
                     html = page.content() or ""
+
+                    # Only process HTML-ish documents
+                    if "<html" not in html.lower():
+                        continue
 
                     new_links = self.extract_links(current_url, html)
                     urls_to_visit.extend(sorted(new_links - self.visited_urls))

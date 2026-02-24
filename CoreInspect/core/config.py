@@ -11,5 +11,5 @@ class ScanConfig:
     rate_limit_rps: float = 2.0
     headless: bool = True
     out_dir: str = "reports"
-    output_format: str = "both"       # txt | json | both
+    output_format: str = "both"       # txt | json | html | both
     authorized: bool = False

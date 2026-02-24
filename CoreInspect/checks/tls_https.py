@@ -7,14 +7,22 @@ from reporting.models import Finding
 class TLSHttpsCheck(BaseCheck):
     name = "TLSHttpsCheck"
 
+    def __init__(self, requester, reporter):
+        super().__init__(requester, reporter)
+        self._checked_hosts = set()
+
     def run_url(self, url: str):
-        # Only test once per host typically, but keeping it simple per-url (cheap HEAD).
         parsed = urlparse(url)
         if parsed.scheme not in ("http", "https"):
             return
 
+        host_key = (parsed.scheme, parsed.netloc)
+        if host_key in self._checked_hosts:
+            return
+        self._checked_hosts.add(host_key)
+
+        # If HTTP: check redirect to HTTPS
         if parsed.scheme == "http":
-            # Check if it redirects to https
             r = self.req.head(url)
             if r is not None:
                 final = r.url or ""
@@ -27,18 +35,20 @@ class TLSHttpsCheck(BaseCheck):
                         evidence=f"Final URL: {final}",
                         recommendation="Redirect all HTTP traffic to HTTPS and consider enabling HSTS.",
                     ))
-        else:
-            # HTTPS present: check for HSTS header presence (also covered by HeadersCheck)
-            r = self.req.head(url)
-            if r is None:
-                return
-            hsts = r.headers.get("Strict-Transport-Security")
-            if not hsts:
-                self.reporter.add(Finding(
-                    title="HSTS not enabled on HTTPS endpoint",
-                    severity="Low",
-                    category="TLS",
-                    url=url,
-                    evidence="Strict-Transport-Security header missing.",
-                    recommendation="Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).",
-                ))
+            return
+
+        # HTTPS: check HSTS once per host
+        r = self.req.head(url)
+        if r is None:
+            return
+
+        hsts = r.headers.get("Strict-Transport-Security")
+        if not hsts:
+            self.reporter.add(Finding(
+                title="HSTS not enabled on HTTPS host",
+                severity="Low",
+                category="TLS",
+                url=f"{parsed.scheme}://{parsed.netloc}/",
+                evidence="Strict-Transport-Security header missing.",
+                recommendation="Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).",
+            ))
