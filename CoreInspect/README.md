@@ -120,9 +120,9 @@ Do not run it against systems you do not own or have explicit permission to test
 ---
 
 ## Documentation
-- See: [docs/README.md](docs/README.md)
-- Troubleshooting: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
-- Checks reference: [docs/CHECKS.md](docs/CHECKS.md)
+- See: [docs/README.md](https://github.com/SamiS3d/Lip-cybersecurity/blob/main/docs/README.md)
+- Troubleshooting: [docs/TROUBLESHOOTING.md](https://github.com/SamiS3d/Lip-cybersecurity/blob/main/docs/TROUBLESHOOTING.md)
+- Checks reference: [docs/CHECKS.md](https://github.com/SamiS3d/Lip-cybersecurity/blob/main/docs/CHECKS.md)
 
 ---
 
