@@ -1,0 +1,131 @@
+======================================================================
+ CoreInspect Security Audit Report
+ Target: https://nexusnature.cloud
+ Profile: passive
+ Date: 2026-02-24 22:38:57
+======================================================================
+
+Security Score: 71/100  Grade: C
+Deductions: 29
+Breakdown:
+  - Headers: 11
+  - InfoLeak: 0
+  - TLS: 18
+
+Top issues:
+  1. [Medium] Missing security header: strict-transport-security (https://nexusnature.cloud)
+  2. [Low] HSTS not enabled on HTTPS endpoint (https://nexusnature.cloud)
+  3. [Low] HSTS not enabled on HTTPS endpoint (https://nexusnature.cloud/css/all.min.css)
+  4. [Low] HSTS not enabled on HTTPS endpoint (https://nexusnature.cloud/css/bootstrap.min.css)
+  5. [Low] HSTS not enabled on HTTPS endpoint (https://nexusnature.cloud/css/style.css)
+  6. [Low] HSTS not enabled on HTTPS endpoint (https://nexusnature.cloud/device?api_key=${device.api_key})
+  7. [Low] HSTS not enabled on HTTPS endpoint (https://nexusnature.cloud/home)
+  8. [Low] HSTS not enabled on HTTPS endpoint (https://nexusnature.cloud/img/MainLogo.png)
+
+----------------------------------------------------------------------
+
+[1] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
+[2] Missing security header: strict-transport-security
+    Severity: Medium
+    Category: Headers
+    URL: https://nexusnature.cloud
+    Evidence: Header not present in response.
+    Recommendation: Enable HSTS to enforce HTTPS.
+----------------------------------------------------------------------
+[3] Missing security header: x-content-type-options
+    Severity: Low
+    Category: Headers
+    URL: https://nexusnature.cloud
+    Evidence: Header not present in response.
+    Recommendation: Set X-Content-Type-Options: nosniff.
+----------------------------------------------------------------------
+[4] Missing security header: referrer-policy
+    Severity: Low
+    Category: Headers
+    URL: https://nexusnature.cloud
+    Evidence: Header not present in response.
+    Recommendation: Set Referrer-Policy to reduce referrer leakage.
+----------------------------------------------------------------------
+[5] Missing security header: permissions-policy
+    Severity: Low
+    Category: Headers
+    URL: https://nexusnature.cloud
+    Evidence: Header not present in response.
+    Recommendation: Set Permissions-Policy to restrict powerful browser features.
+----------------------------------------------------------------------
+[6] Server header disclosed
+    Severity: Info
+    Category: InfoLeak
+    URL: https://nexusnature.cloud
+    Evidence: Server: Apache/2.4.65 (Debian)
+    Recommendation: Consider minimizing server banner information if not needed.
+----------------------------------------------------------------------
+[7] X-Powered-By header disclosed
+    Severity: Info
+    Category: InfoLeak
+    URL: https://nexusnature.cloud
+    Evidence: X-Powered-By: PHP/8.2.30
+    Recommendation: Disable X-Powered-By to reduce technology fingerprinting.
+----------------------------------------------------------------------
+[8] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud/css/all.min.css
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
+[9] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud/css/bootstrap.min.css
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
+[10] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud/css/style.css
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
+[11] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud/device?api_key=${device.api_key}
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
+[12] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud/home
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
+[13] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud/img/MainLogo.png
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
+[14] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud/login
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
+[15] HSTS not enabled on HTTPS endpoint
+    Severity: Low
+    Category: TLS
+    URL: https://nexusnature.cloud/register
+    Evidence: Strict-Transport-Security header missing.
+    Recommendation: Enable HSTS (start with short max-age, then increase; consider includeSubDomains/preload).
+----------------------------------------------------------------------
